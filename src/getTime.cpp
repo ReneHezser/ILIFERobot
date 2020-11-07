@@ -1,5 +1,4 @@
-/*#include <time.h>*/
-
+#include <getTime.h>
 
 void setupTime() {
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");

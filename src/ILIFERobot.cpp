@@ -1,37 +1,23 @@
+#include <Arduino.h>
+#include <credentials.h>
+#include <ILIFERobot.h>
+#include <mqtt.h>
+#include <http.h>
+#include <getTime.h>
+#include <pinTime.h>
+
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPUpdateServer.h>
-#include <PubSubClient.h>
 #include "Structs.h"
 #include <ArduinoJson.h>
-#include <time.h>
 #include "htmlindex.h"
-
 
 const int sleepTime = 50; //ms
 const int publishStatusTimer = 30000; //ms
 
-const char* WiFi_SSID = "your_ssid"; // LAN
-const char* WiFi_PW = "your_password";
-const char* AP_SSID = "AP_Name"; // AP and UDP clients
-const char* AP_PW = "AP_Password";
-const char* mDNSname = "ILIFERobot"; // goto "ILIFERobot.local" for mDNS enabled browsers and fruit phones
-
 //IPAddress ip(192, 168, 1, 25), gateway(192, 168, 1, 1), subnet(255, 255, 255, 0); // WiFi/LAN, fixed IP for faster (re)connect
 IPAddress broadcastIP(192, 168, 4, 255); // all UDP clients
-
-
-const char* update_path = "/firmware";
-const char* update_username = "admin";
-const char* update_password = "admin";
-
-const char* mqtt_server = "192.168.5.7";
-const char* inTopic = "ILIFERobot/command";
-const char* outTopic = "ILIFERobot/state";
-const char* outTopic_debug = "ILIFERobot/debug";
-
 
 #define IRPin       4 //pin D2, pin that is used for sending the IR signals
 #define statusPin1  14 // pin D5, input pin for robot status (from led signal)
@@ -40,21 +26,6 @@ const char* outTopic_debug = "ILIFERobot/debug";
 #define dockPin     16 // pin D0, input pin for dock contact
 #define batteryPin  A0
 
-const IRbutton rStart = {"start", {8850,4500, 500,600, 500,600, 500,600, 500,600, 500,600, 500,600, 500,1700, 550,600, 500,1700, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,600, 500,600, 500,1750, 500,600, 500,600, 500,600, 500,1700, 500,600, 500,1750, 500,1700, 500,600, 500,1750, 500,1700, 500,1700, 500,600, 500,1750, 500}}; // NEC 2AA22DD
-const IRbutton rUp =    {"up", {8850,4500, 500,600, 500,600, 500,600, 500,600, 500,600, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1700, 550,550, 550,1700, 500,1700, 550,600, 500,1700, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500}};  // NEC 2AA55AA
-const IRbutton rRight = {"right", {8900,4450, 500,600, 500,600, 500,600, 500,600, 500,600, 550,550, 550,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,600, 500,1700, 550,550, 550,600, 500,600, 500,1700, 500,600, 500,600, 500,1750, 500,600, 500,1700, 500,1700, 500,1750, 500,600, 500,1700, 500,1750, 500}};  // NEC 2AA44BB
-const IRbutton rDown =  {"down", {8900,4450, 500,600, 550,550, 550,600, 500,600, 500,600, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1700, 550,600, 500,1700, 500,600, 500,600, 500,1750, 500,1700, 500,600, 500,600, 500,1700, 500,1750, 500,600, 500,1750, 500,600, 500,600, 500,1700, 500,1700, 500,600, 500,600, 500,1750, 500}};  // NEC 2AA6699
-const IRbutton rLeft =  {"left", {8900,4500, 500,600, 500,600, 500,600, 500,600, 500,600, 500,600, 500,1700, 550,550, 550,1700, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,600, 550,550, 500,1750, 500,1700, 500,600, 500,600, 500,1750, 500,1700, 550,1700, 500,1700, 550,550, 500,600, 500,1750, 500,1700, 500,600, 500,600, 500}};  // NEC 2AA33CC
-const IRbutton rSpot =  {"spot", {8900,4450, 550,550, 550,600, 500,600, 500,600, 500,600, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,600, 500,1750, 500,1700, 500,1700, 550,600, 500,1700, 500,1700, 500,1750, 500,1700, 500,600, 550,550, 500,600, 550,1700, 500,600, 500,600, 500,600, 500}};  // NEC 2AA7788
-const IRbutton rHome =  {"home", {8900,4450, 500,600, 500,600, 500,600, 500,600, 500,600, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,600, 550,550, 550,1700, 500,600, 500,600, 500,600, 500,600, 500,1750, 500,1700, 500,1700, 550,550, 550,1700, 500,1700, 500,1750, 500}};  // NEC 2AA8877
-const IRbutton rEdge =  {"edge", {8900,4500, 500,600, 500,600, 500,600, 500,600, 500,600, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 500,600, 500,1750, 500,600, 500,1700, 550,550, 500,1750, 500,600, 500,600, 500,1700, 500,1700, 500,600, 550,600, 500,1700, 550,550, 500,1750, 500,1700, 500,600, 500,600, 500,1750, 500,1700, 500,600, 500}};  // NEC 2AA9966
-
-const IRbutton buttonCmds[] = {rStart, rUp, rRight, rDown, rLeft, rSpot, rHome, rEdge};
-
-WiFiClient espClient;
-ESP8266WebServer server(80);
-ESP8266HTTPUpdateServer httpUpdater;
-PubSubClient mqtt(espClient);
 WiFiUDP UDP;
 
 Status robotStatus = S_BOOTING;
@@ -117,8 +88,6 @@ void loop() {
   checkLedStatus();
   delay(sleepTime);
 }
-
-
 
 /* 
  *  Functions 
@@ -245,8 +214,6 @@ void SendIRCode(IRbutton irbutton)
   sprintf(command, "IR %s", irbutton.name);
   mqtt.publish(outTopic_debug, command);
 }
-
-
 
 void checkLedStatus() {
   unsigned long now = millis();

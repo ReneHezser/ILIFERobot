@@ -1,10 +1,12 @@
-unsigned long lastReconnect = 0;
+#include <mqtt.h>
 
+unsigned long lastReconnect = 0;
+PubSubClient mqtt(espClient);
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("[MQTT] Message arrived: ");
   
-  int n;
+  uint n;
   for (n = 0; n < length; n++) {
     Serial.print((char)payload[n]);
   }
@@ -54,13 +56,13 @@ void reconnect() {
   unsigned long now = millis();
   
   // Loop until we're reconnected
-  if(!mqtt.connected() and now-lastReconnect > 5000 or lastReconnect == 0) {
+  if(!mqtt.connected() and (now-lastReconnect > 5000 or lastReconnect == 0)) {
     lastReconnect = now;
     
     Serial.print("[MQTT] Attempting connection...");
     // Attempt to connect
-    if (mqtt.connect("ESP8266Client")) {
-//    if (mqtt.connect("ESP8266Client", mqtt_user, mqtt_pass)) { // use instead previous line when MQTT broker uses credentials
+    // if (mqtt.connect("ESP8266Client")) { // use instead of the next line when MQTT broker does not use credentials
+    if (mqtt.connect("ESP8266ClientILIFERobot", mqtt_username, mqtt_password)) { // use instead previous line when MQTT broker uses credentials
       Serial.println("connected");
       publishStatus();
       mqtt.subscribe(inTopic);
@@ -72,4 +74,3 @@ void reconnect() {
     }
   }
 }
-

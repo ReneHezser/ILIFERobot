@@ -1,3 +1,8 @@
+#ifndef __Structs_H__
+#define __Structs_H__
+
+#include <Arduino.h>
+
 typedef struct IRbutton {
   const char* name;
   unsigned int signal[67];
@@ -38,3 +43,5 @@ enum Status {
   S_CHARGING,
   S_GOING_HOME
 };
+
+#endif

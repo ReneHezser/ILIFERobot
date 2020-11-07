@@ -1,3 +1,12 @@
+#include <http.h>
+
+const char* update_path = "/firmware";
+const char* update_username = "admin";
+const char* update_password = "admin";
+WiFiClient espClient;
+ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
+
 void processCmdRequest() {
   if(!server.hasArg("c")) return returnFail("BAD ARGS");
   String cmd = server.arg("c");
@@ -39,35 +48,3 @@ void setupHTTP() {
   
   server.on("/cmd", HTTP_GET, processCmdRequest);
 }
-
-
-
-
-
-
-
-
-//
-//void HTTPRobotAction(IRbutton irbutton){
-//  //SendIRCode(irbutton);
-//  
-//  Serial.print("[HTTP] Got robot request: ");
-//  Serial.println(irbutton.name);
-//  
-//  server.send(200, "text/plain", "Robot "+String(irbutton.name));
-//
-//  char command[20];
-//  sprintf(command, "robot;%s", irbutton.name);
-//  mqtt.publish(outTopic, command);
-//}
-//    
-//void setupHTTPRobotCmd() {
-//  for(int c = 0; c < sizeof(buttonCmds)/sizeof(buttonCmds[0]); c++) {
-//    
-//    char requesturl[20];
-//    sprintf(requesturl, "/cmd=%s", buttonCmds[c].name);
-//
-//    //handle http request
-//    server.on(requesturl, std::bind(&HTTPRobotAction, buttonCmds[c]));
-//  }
-//}

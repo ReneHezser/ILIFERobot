@@ -38,6 +38,26 @@ This can be connected to:
 Be sure to protect the NodeMCU from touching the metal plate. Insulate the plate with insulation tape or protect the NodeMCU itself.
 
 # Software installation
+## PlatformIO instructions (new)
+Configuration is done pre compilation by creating a ```src\credentials.cpp``` file.
+```cpp
+#include <credentials.h>
+
+const char* WiFi_SSID = "ssid"; // LAN
+const char* WiFi_PW = "password";
+const char* AP_SSID = "ILIFERobot"; // AP and UDP clients
+const char* AP_PW = "AP_Password";
+const char* mDNSname = "ILIFERobot"; // goto "ILIFERobot.local" for mDNS enabled browsers and fruit phones
+
+const char* mqtt_server = "192.168.0.0";
+const char* mqtt_username = "";
+const char* mqtt_password = "";
+const char* inTopic = "ILIFERobot/command";
+const char* outTopic = "ILIFERobot/state";
+const char* outTopic_debug = "ILIFERobot/debug";
+```
+
+## original Arduino instructions
 Change the lines in ILIFERobot.ino to match your WiFi credentials and MQTT server:
 
     const char* WiFi_SSID = "your_ssid"; // LAN

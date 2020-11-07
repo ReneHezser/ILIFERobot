@@ -1,3 +1,6 @@
+#ifndef __htmlindex_H__
+#define __htmlindex_H__
+
 const char PAGE_index[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
@@ -128,3 +131,5 @@ g{cursor: pointer;} g{user-select:none;-moz-user-select:none;} g.btn:active{opac
 </body>
 </html>
 )=====";
+
+#endif

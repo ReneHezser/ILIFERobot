@@ -1,3 +1,5 @@
+#include <pinTime.h>
+
 void initPinTimer(pinTime &pin, int pin_number, size_t readings) {
   if(readings > 512)
     readings = 512;
@@ -71,7 +73,6 @@ void calcPinTime(pinTime &pin, unsigned int timeout) {
     pin.ratio = (float)pin.high/(float)(pin.low+pin.high);
   }
 }
-
 
 int calculateAverageValue(pinTime &pin) {
   //first add reading to buffer
